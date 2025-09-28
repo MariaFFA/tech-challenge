@@ -56,3 +56,10 @@ export const createCommentSchema = Joi.object({
   postId: Joi.number().integer().positive().required(),
   parentId: Joi.number().integer().positive().optional(),
 });
+
+// Profile update schema
+export const updateProfileSchema = Joi.object({
+  firstName: Joi.string().max(100).allow('').optional(), // Permite string vazia
+  lastName: Joi.string().max(100).allow('').optional(),
+  avatar: Joi.string().uri().allow('').optional(), // Deve ser uma URL válida
+});

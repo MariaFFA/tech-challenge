@@ -1,24 +1,27 @@
-FROM node:18-alpine
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Copia os arquivos de dependência
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --silent
+# Usamos 'npm install' que é mais flexível para o desenvolvimento
+RUN npm install
 
-# Copy source code
+# Copia o resto do código do aplicativo
 COPY . .
 
-# Build the application
+# Executa o script de build do React, que cria a pasta /app/build
 RUN npm run build
 
-# Install serve to run the app
-RUN npm install -g serve
 
-# Expose port
-EXPOSE 3000
+FROM nginx:stable-alpine
 
-# Start the application
-CMD ["serve", "-s", "build", "-l", "3000"]
+# Copia os arquivos estáticos da pasta 'build' do estágio anterior
+COPY --from=builder /app/build /usr/share/nginx/html
+
+# Expõe a porta 80, que é a porta padrão do Nginx
+EXPOSE 80
+
+# O comando padrão da imagem nginx já inicia o servidor,
+# então não precisamos de um CMD customizado.

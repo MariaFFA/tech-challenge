@@ -1,6 +1,7 @@
 import { Request } from 'express';
 
 export interface AuthenticatedRequest extends Request {
+  query: PostQuery;
   user?: {
     id: number;
     email: string;

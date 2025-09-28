@@ -4,30 +4,39 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: tech-challenge-db
+    restart: unless-stopped 
     environment:
       POSTGRES_DB: tech_challenge_blog
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password123
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - tech-challenge-network
+    secrets:
+      - db_password 
+    healthcheck: 
+      test: ["CMD-SHELL", "pg_isready -U admin -d tech_challenge_blog"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: tech-challenge-backend
+    restart: unless-stopped 
     environment:
       NODE_ENV: development
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: tech_challenge_blog
       DB_USER: admin
-      DB_PASSWORD: password123
-      JWT_SECRET: your-super-secret-jwt-key-here
+      DB_PASSWORD_FILE: /run/secrets/db_password
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET}
@@ -35,23 +44,33 @@ services:
     ports:
       - "3001:3001"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy 
     volumes:
       - ./backend:/app
       - /app/node_modules
     networks:
       - tech-challenge-network
-    # Intentional issue: missing restart policy
+    secrets: 
+      - db_password
+      - jwt_secret
+    healthcheck: 
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: tech-challenge-frontend
+    restart: unless-stopped
     environment:
       REACT_APP_API_URL: http://localhost:3001
     ports:
-      - "3000:3000"
+      - "3000:80"
     depends_on:
       - backend
     volumes:
@@ -59,6 +78,11 @@ services:
       - /app/node_modules
     networks:
       - tech-challenge-network
+    healthcheck: 
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 volumes:
   postgres_data:
@@ -66,3 +90,9 @@ volumes:
 networks:
   tech-challenge-network:
     driver: bridge
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt

@@ -1,6 +1,6 @@
 import { Response } from 'express';
-import { Op } from 'sequelize';
-import { Post, User, Comment, Like } from '../models';
+import { Op, Sequelize } from 'sequelize';
+import { Post, User, Comment, Like, sequelize } from '../models';
 import { AuthenticatedRequest, CreatePostRequest, UpdatePostRequest, PostQuery } from '../types';
 
 export const getPosts = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -41,39 +41,51 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
       whereClause.authorId = parseInt(authorId);
     }
 
-    // Intentional N+1 query problem: This will cause performance issues
     const posts = await Post.findAndCountAll({
       where: whereClause,
       limit: limitNumber,
       offset,
       order: [[sortBy, sortOrder]],
+      distinct: true, 
       include: [
         {
           model: User,
           as: 'author',
           attributes: ['id', 'username', 'avatar'],
         },
-        // Missing eager loading for comments and likes - will cause N+1 queries
+        {
+          model: Comment,
+          as: 'comments',
+          attributes: ['id'],
+        },
+        {
+          model: Like,
+          as: 'likes',
+          attributes: ['userId'],
+        },
       ],
     });
 
-    // Intentionally inefficient: Making separate queries for each post
-    const postsWithCounts = await Promise.all(
-      posts.rows.map(async (post) => {
-        const commentCount = await Comment.count({ where: { postId: post.id } });
-        const likeCount = await Like.count({ where: { postId: post.id } });
-        const isLiked = req.user 
-          ? await Like.findOne({ where: { postId: post.id, userId: req.user.id } }) !== null
-          : false;
+    const postsWithCounts = posts.rows.map((post) => {
+      const commentCount = post.comments?.length || 0;
+      const likeCount = post.likes?.length || 0;
+      
+      const isLiked = req.user
+        ? post.likes?.some(like => like.userId === req.user.id) || false
+        : false;
 
-        return {
-          ...post.toJSON(),
-          commentCount,
-          likeCount,
-          isLiked,
-        };
-      })
-    );
+      const postJSON = post.toJSON();
+      
+      delete postJSON.comments;
+      delete postJSON.likes;
+
+      return {
+        ...postJSON,
+        commentCount,
+        likeCount,
+        isLiked,
+      };
+    });
 
     res.status(200).json({
       posts: postsWithCounts,
