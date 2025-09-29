@@ -30,9 +30,7 @@ export const postService = {
     return response.data;
   },
 
-  async getPostById(id: number): Promise<{
-    tags: { post: Post; } | undefined; post: Post 
-}> {
+  async getPostById(id: number): Promise<{ post: Post }> {
     const response = await api.get<{ post: Post }>(`/posts/${id}`);
     return response.data;
   },

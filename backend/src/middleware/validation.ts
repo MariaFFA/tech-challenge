@@ -59,7 +59,7 @@ export const createCommentSchema = Joi.object({
 
 // Profile update schema
 export const updateProfileSchema = Joi.object({
-  firstName: Joi.string().max(100).allow('').optional(), // Permite string vazia
+  firstName: Joi.string().max(100).allow('').optional(),
   lastName: Joi.string().max(100).allow('').optional(),
-  avatar: Joi.string().uri().allow('').optional(), // Deve ser uma URL válida
+  avatar: Joi.string().uri().allow('').optional(), 
 });
