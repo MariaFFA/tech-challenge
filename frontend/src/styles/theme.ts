@@ -1,5 +1,6 @@
 export const theme = {
   colors: {
+    white: '#ffffff',
     primary: {
       50: '#eff6ff',
       100: '#dbeafe',
@@ -115,12 +116,12 @@ export const theme = {
     xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
     '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
   },
-  breakpoints: {
-    sm: '640px',
-    md: '768px',
-    lg: '1024px',
-    xl: '1280px',
-  },
+  breakpoints: [
+    '640px', 
+    '768px', 
+    '1024px', 
+    '1280px'
+  ],
 };
 
 export type Theme = typeof theme;

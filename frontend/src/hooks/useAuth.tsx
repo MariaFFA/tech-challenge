@@ -1,4 +1,4 @@
-import { useState, useContext, createContext, ReactNode, useEffect } from 'react';
+import { useState, useContext, createContext, ReactNode, useEffect, FC } from 'react';
 import { User } from '../types';
 import { authService } from '../services/authService';
 import { setAuthToken, removeAuthToken, getUserData, setUserData } from '../services/api';
@@ -15,7 +15,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -79,19 +83,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw error;
     }
   };
+  
+  const authContextValue: AuthContextType = {
+    user,
+    isAuthenticated: !!user,
+    isLoading,
+    login,
+    register,
+    logout,
+    updateProfile,
+  };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        register,
-        logout,
-        updateProfile,
-      }}
-    >
+    <AuthContext.Provider value={authContextValue}>
       {children}
     </AuthContext.Provider>
   );

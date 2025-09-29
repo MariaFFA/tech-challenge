@@ -6,6 +6,7 @@ import {
   flexbox, 
   typography, 
   border,
+  system, // Importar o 'system' para props personalizadas
   SpaceProps, 
   ColorProps, 
   LayoutProps, 
@@ -13,25 +14,46 @@ import {
   TypographyProps,
   BorderProps
 } from 'styled-system';
+import shouldForwardProp from '@styled-system/should-forward-prop';
 
+// 1. Definir o tipo para a propriedade 'gap'
+interface GapProps {
+  gap?: number | string;
+}
+
+// 2. Criar o parser de estilo para 'gap'
+const gap = system({
+  gap: {
+    property: 'gap',
+    scale: 'space', // Usar a escala de espaçamento do tema (theme.space)
+  },
+});
+
+// 3. Adicionar GapProps à interface do Box
 interface BoxProps extends 
   SpaceProps, 
   ColorProps, 
   LayoutProps, 
   FlexboxProps,
   TypographyProps,
-  BorderProps {
+  BorderProps,
+  GapProps { // Adicionar aqui
   as?: keyof JSX.IntrinsicElements;
 }
 
-export const Box = styled.div<BoxProps>`
+// Usar a opção `shouldForwardProp` para filtrar as props
+export const Box = styled.div.withConfig({
+  shouldForwardProp,
+})<BoxProps>`
   ${space}
   ${color}
   ${layout}
   ${flexbox}
   ${typography}
   ${border}
+  ${gap} // 4. Adicionar o parser de 'gap' aqui
 `;
+
 
 export const Flex = styled(Box)`
   display: flex;
@@ -42,20 +64,17 @@ export const Container = styled(Box)`
   margin: 0 auto;
   padding-left: ${({ theme }) => theme.space[4]};
   padding-right: ${({ theme }) => theme.space[4]};
-  
-  @media (min-width: ${({ theme }) => theme.breakpoints.sm}) {
+
+  @media (min-width: ${({ theme }) => theme.breakpoints[0]}) {
     max-width: ${({ theme }) => theme.sizes.container.sm};
   }
-  
-  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+  @media (min-width: ${({ theme }) => theme.breakpoints[1]}) {
     max-width: ${({ theme }) => theme.sizes.container.md};
   }
-  
-  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+  @media (min-width: ${({ theme }) => theme.breakpoints[2]}) {
     max-width: ${({ theme }) => theme.sizes.container.lg};
   }
-  
-  @media (min-width: ${({ theme }) => theme.breakpoints.xl}) {
+  @media (min-width: ${({ theme }) => theme.breakpoints[3]}) {
     max-width: ${({ theme }) => theme.sizes.container.xl};
   }
 `;
@@ -69,11 +88,13 @@ interface TextProps extends TypographyProps, ColorProps, SpaceProps {
   as?: keyof JSX.IntrinsicElements;
 }
 
-export const Text = styled.span<TextProps>`
+export const Text = styled.span.withConfig({
+  shouldForwardProp,
+})<TextProps>`
   ${typography}
   ${color}
   ${space}
-  
+
   ${({ variant, theme }) => {
     switch (variant) {
       case 'heading':
@@ -119,12 +140,12 @@ export const Button = styled.button<ButtonProps>`
   font-weight: ${({ theme }) => theme.fontWeights.medium};
   transition: all 0.2s ease-in-out;
   cursor: pointer;
-  
+
   &:disabled {
     cursor: not-allowed;
     opacity: 0.6;
   }
-  
+
   ${({ size, theme }) => {
     switch (size) {
       case 'sm':
@@ -144,14 +165,14 @@ export const Button = styled.button<ButtonProps>`
         `;
     }
   }}
-  
+
   ${({ variant, theme }) => {
     switch (variant) {
       case 'secondary':
         return css`
           background-color: ${theme.colors.gray[200]};
           color: ${theme.colors.gray[800]};
-          
+
           &:hover:not(:disabled) {
             background-color: ${theme.colors.gray[300]};
           }
@@ -161,17 +182,17 @@ export const Button = styled.button<ButtonProps>`
           background-color: transparent;
           border-color: ${theme.colors.primary[500]};
           color: ${theme.colors.primary[500]};
-          
+
           &:hover:not(:disabled) {
             background-color: ${theme.colors.primary[500]};
-            color: white;
+            color: ${theme.colors.white};
           }
         `;
       case 'ghost':
         return css`
           background-color: transparent;
           color: ${theme.colors.primary[500]};
-          
+
           &:hover:not(:disabled) {
             background-color: ${theme.colors.primary[50]};
           }
@@ -179,15 +200,15 @@ export const Button = styled.button<ButtonProps>`
       default:
         return css`
           background-color: ${theme.colors.primary[500]};
-          color: white;
-          
+          color: ${theme.colors.white};
+
           &:hover:not(:disabled) {
             background-color: ${theme.colors.primary[600]};
           }
         `;
     }
   }}
-  
+
   ${({ isLoading }) => 
     isLoading && css`
       pointer-events: none;

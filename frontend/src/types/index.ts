@@ -2,6 +2,7 @@ export interface User {
   id: number;
   username: string;
   email: string;
+  role?: string; 
   firstName?: string;
   lastName?: string;
   avatar?: string;
@@ -77,6 +78,10 @@ export interface PostsResponse {
   pagination: PaginationMeta;
 }
 
+export interface PostResponse {
+  post: Post;
+}
+
 export interface CommentsResponse {
   comments: Comment[];
   pagination: PaginationMeta;
@@ -119,4 +124,9 @@ export interface UploadResponse {
     bucket: string;
     etag: string;
   };
+}
+
+export interface LikeResponse {
+    message: string;
+    liked: boolean;
 }

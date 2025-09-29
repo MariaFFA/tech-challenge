@@ -68,14 +68,12 @@ export const GlobalStyle = createGlobalStyle`
     font-family: inherit;
   }
 
-  /* Intentional CSS issue: Poor responsive design */
   @media (max-width: 768px) {
     .desktop-only {
-      display: block !important; /* This will cause issues on mobile */
+      display: none !important;
     }
   }
 
-  /* Intentional CSS issue: Accessibility problems */
   .sr-only {
     position: absolute;
     width: 1px;
@@ -85,24 +83,22 @@ export const GlobalStyle = createGlobalStyle`
     overflow: hidden;
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
-    border: 0;
-    /* Missing important declarations that would break screen readers */
+    border-width: 0;
   }
 
-  /* Custom scrollbar (intentional performance issue) */
   ::-webkit-scrollbar {
     width: 12px;
   }
 
   ::-webkit-scrollbar-track {
     background: ${({ theme }) => theme.colors.gray[100]};
-    /* Missing will-change property for performance */
+    will-change: background;
   }
 
   ::-webkit-scrollbar-thumb {
     background: ${({ theme }) => theme.colors.gray[300]};
     border-radius: ${({ theme }) => theme.radii.md};
-    /* Missing will-change property for performance */
+    will-change: background;
   }
 
   ::-webkit-scrollbar-thumb:hover {

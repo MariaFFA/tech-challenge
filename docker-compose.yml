@@ -4,7 +4,7 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: tech-challenge-db
-    restart: unless-stopped 
+    restart: unless-stopped
     environment:
       POSTGRES_DB: tech_challenge_blog
       POSTGRES_USER: admin
@@ -16,8 +16,8 @@ services:
     networks:
       - tech-challenge-network
     secrets:
-      - db_password 
-    healthcheck: 
+      - db_password
+    healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin -d tech_challenge_blog"]
       interval: 10s
       timeout: 5s
@@ -28,7 +28,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: tech-challenge-backend
-    restart: unless-stopped 
+    restart: unless-stopped
     environment:
       NODE_ENV: development
       DB_HOST: postgres
@@ -37,6 +37,7 @@ services:
       DB_USER: admin
       DB_PASSWORD_FILE: /run/secrets/db_password
       JWT_SECRET_FILE: /run/secrets/jwt_secret
+      # As variáveis da AWS podem ser passadas do seu .env local
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET}
@@ -45,16 +46,16 @@ services:
       - "3001:3001"
     depends_on:
       postgres:
-        condition: service_healthy 
+        condition: service_healthy
     volumes:
       - ./backend:/app
-      - /app/node_modules
+      - /app/node_modules # Impede que o node_modules local sobrescreva o do container
     networks:
       - tech-challenge-network
-    secrets: 
+    secrets:
       - db_password
       - jwt_secret
-    healthcheck: 
+    healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
       timeout: 10s
@@ -68,18 +69,17 @@ services:
     container_name: tech-challenge-frontend
     restart: unless-stopped
     environment:
-      REACT_APP_API_URL: http://localhost:3001
+      REACT_APP_API_URL: http://localhost:3001/api 
     ports:
-      - "3000:80"
+      - "3000:80" 
     depends_on:
       - backend
     volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - ./frontend/src:/app/src 
     networks:
       - tech-challenge-network
-    healthcheck: 
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"] 
       interval: 30s
       timeout: 10s
       retries: 5

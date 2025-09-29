@@ -4,6 +4,7 @@
   "description": "A full-stack blog application for technical evaluation",
   "main": "index.js",
   "scripts": {
+    "install:all": "npm install && npm install --prefix backend && npm install --prefix frontend",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",

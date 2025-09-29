@@ -10,7 +10,7 @@ const HeaderContainer = styled.header`
   position: sticky;
   top: 0;
   z-index: 1000;
-  /* Intentional performance issue: Missing will-change property */
+  will-change: transform;
   box-shadow: ${({ theme }) => theme.shadows.sm};
 `;
 

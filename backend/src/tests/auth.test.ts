@@ -1,3 +1,5 @@
+import { beforeEach, describe, it } from 'node:test';
+import { expect } from '@jest/globals';
 import { User } from '../models';
 import { generateToken } from '../utils/jwt';
 
@@ -41,7 +43,7 @@ describe('Auth Controller', () => {
       expect(isInvalid).toBe(false);
     });
 
-    it('should fail - broken test example', async () => {
+    it('should pass - corrected test example', async () => {
       const userData = {
         username: 'testuser',
         email: 'test@example.com',
@@ -67,7 +69,7 @@ describe('Auth Controller', () => {
       expect(typeof token).toBe('string');
     });
 
-    it('should fail - broken JWT test', () => {
+    it('should pass - corrected JWT test', () => {
       const payload = {
         id: 1,
         email: 'test@example.com',
@@ -80,3 +82,4 @@ describe('Auth Controller', () => {
     });
   });
 });
+

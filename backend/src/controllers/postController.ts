@@ -46,7 +46,7 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
       limit: limitNumber,
       offset,
       order: [[sortBy, sortOrder]],
-      distinct: true, 
+      distinct: true,
       include: [
         {
           model: User,
@@ -56,26 +56,26 @@ export const getPosts = async (req: AuthenticatedRequest, res: Response): Promis
         {
           model: Comment,
           as: 'comments',
-          attributes: ['id'],
+          attributes: ['id'], 
         },
         {
           model: Like,
           as: 'likes',
-          attributes: ['userId'],
+          attributes: ['userId'], 
         },
       ],
     });
 
     const postsWithCounts = posts.rows.map((post) => {
-      const commentCount = post.comments?.length || 0;
-      const likeCount = post.likes?.length || 0;
+      const postJSON = post.get({ plain: true });
+      
+      const commentCount = postJSON.comments?.length || 0;
+      const likeCount = postJSON.likes?.length || 0;
       
       const isLiked = req.user
-        ? post.likes?.some(like => like.userId === req.user.id) || false
+        ? postJSON.likes?.some((like: Like) => like.userId === req.user!.id) || false
         : false;
 
-      const postJSON = post.toJSON();
-      
       delete postJSON.comments;
       delete postJSON.likes;
 
@@ -114,6 +114,23 @@ export const getPostById = async (req: AuthenticatedRequest, res: Response): Pro
           as: 'author',
           attributes: ['id', 'username', 'firstName', 'lastName', 'avatar'],
         },
+        {
+          model: Comment, 
+          as: 'comments',
+          include: [{ 
+            model: User,
+            as: 'author',
+            attributes: ['id', 'username', 'avatar']
+          }],
+          where: { parentId: null },
+          required: false,
+          order: [['createdAt', 'DESC']]
+        },
+        {
+          model: Like,
+          as: 'likes',
+          attributes: ['userId']
+        }
       ],
     });
 
@@ -122,22 +139,20 @@ export const getPostById = async (req: AuthenticatedRequest, res: Response): Pro
       return;
     }
 
-    // Increment view count
-    post.viewCount += 1;
-    await post.save();
+    await post.increment('viewCount');
 
-    // Intentional N+1 query problem: Get comments with authors inefficiently
-    const commentsWithAuthors = await post.getCommentsWithAuthors();
-    
-    const likeCount = await Like.count({ where: { postId: post.id } });
-    const isLiked = req.user 
-      ? await Like.findOne({ where: { postId: post.id, userId: req.user.id } }) !== null
+    const postJSON = post.get({ plain: true });
+
+    const likeCount = postJSON.likes?.length || 0;
+    const isLiked = req.user
+      ? postJSON.likes?.some((like: Like) => like.userId === req.user!.id) || false
       : false;
 
+    delete postJSON.likes;
+    
     res.status(200).json({
       post: {
-        ...post.toJSON(),
-        comments: commentsWithAuthors,
+        ...postJSON,
         likeCount,
         isLiked,
       },
@@ -147,7 +162,6 @@ export const getPostById = async (req: AuthenticatedRequest, res: Response): Pro
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
 export const createPost = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
